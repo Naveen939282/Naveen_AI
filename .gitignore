@@ -1,0 +1,24 @@
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.vscode/
+.tools/
+*.keystore
+*.jks
+*.apk
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated artifacts
+/app/release/
+/app/debug/
