@@ -40,7 +40,20 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         viewBinding = true
+    }
+
+    val ollamaBaseUrl = providers.gradleProperty("OLLAMA_BASE_URL")
+        .orElse("http://10.0.2.2:11434")
+        .get()
+    val ollamaModel = providers.gradleProperty("OLLAMA_MODEL")
+        .orElse("llama3")
+        .get()
+
+    defaultConfig {
+        buildConfigField("String", "OLLAMA_BASE_URL", "\"${ollamaBaseUrl.replace("\"", "\\\"")}\"")
+        buildConfigField("String", "OLLAMA_MODEL", "\"${ollamaModel.replace("\"", "\\\"")}\"")
     }
 }
 

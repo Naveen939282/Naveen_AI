@@ -1,6 +1,8 @@
 package com.naveenai.app.ai
 
+import com.naveenai.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,12 +31,13 @@ object AssistantPrompt {
 }
 
 class OllamaAIProvider(
-    private val baseUrl: String = "http://10.0.2.2:11434",
-    private val model: String = "llama3",
+    private val baseUrl: String = BuildConfig.OLLAMA_BASE_URL,
+    private val model: String = BuildConfig.OLLAMA_MODEL,
 ) : AIProvider {
     override suspend fun generateResponse(request: AIRequest): AIResponse = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
         try {
-            val connection = (URL("${baseUrl.trimEnd('/')}/api/chat").openConnection() as HttpURLConnection).apply {
+            connection = (URL("${baseUrl.trimEnd('/')}/api/chat").openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 connectTimeout = 10_000
                 readTimeout = 60_000
@@ -57,10 +60,16 @@ class OllamaAIProvider(
                 ?.bufferedReader()
                 ?.use { it.readText() }
                 .orEmpty()
-            connection.disconnect()
-
             if (responseCode !in 200..299) {
-                return@withContext AIResponse(false, "", "The local AI service returned an error.")
+                val modelError = runCatching { JSONObject(responseBody).optString("error") }.getOrNull()
+                val message = if (modelError?.contains("model", ignoreCase = true) == true &&
+                    modelError.contains("not found", ignoreCase = true)
+                ) {
+                    "Ollama model '$model' is not available. Run 'ollama list' and install the selected model."
+                } else {
+                    "The local AI service returned an error."
+                }
+                return@withContext AIResponse(false, "", message)
             }
 
             val text = JSONObject(responseBody).optJSONObject("message")?.optString("content").orEmpty().trim()
@@ -69,10 +78,14 @@ class OllamaAIProvider(
             } else {
                 AIResponse(true, text)
             }
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (_: IOException) {
             AIResponse(false, "", "I couldn't reach the local AI service. Start Ollama and try again.")
         } catch (_: Exception) {
             AIResponse(false, "", "The local AI service returned an invalid response.")
+        } finally {
+            connection?.disconnect()
         }
     }
 

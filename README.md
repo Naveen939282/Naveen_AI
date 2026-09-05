@@ -119,13 +119,13 @@ Microphone -> SpeechRecognizer -> recognized text -> LocalIntentClassifier
 -> CommandRouter -> CommandResult -> response UI
 ```
 
-Tap the microphone to request `RECORD_AUDIO` only when needed and start Android's built-in `SpeechRecognizer`. The screen exposes `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `SUCCESS`, and `ERROR` states. A text field and Send button provide a development fallback when a microphone or recognizer is unavailable.
+Tap the microphone to request `RECORD_AUDIO` only when needed and start Android's built-in `SpeechRecognizer`. The screen exposes `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `AI_THINKING`, `RESPONDING`, `SUCCESS`, and `ERROR` states. A text field and Send button provide a development fallback when a microphone or recognizer is unavailable.
 
 Currently supported local commands are greetings (`hello`, `hi`, `hey`, `good morning`, and `good evening`) and help (`help`, `commands`, `available commands`, and `what can you do`). Other input returns an explicit unsupported-command response.
 
 ## 10. Step 3 AI brain and voice output
 
-Step 3 routes local commands directly to `CommandRouter`. Other text is sent through `AssistantCoordinator` to the replaceable `AIProvider` abstraction. The configured provider is `OllamaAIProvider`, which uses a local Ollama server at the Android emulator host address (`http://10.0.2.2:11434`) and the `llama3` model by default. No API key or cloud account is required.
+Step 3 routes local commands directly to `CommandRouter`. Other text is sent through `AssistantCoordinator` to the replaceable `AIProvider` abstraction. The configured provider is `OllamaAIProvider`, which uses `http://10.0.2.2:11434` and the `llama3` model by default for an Android Emulator. No API key or cloud account is required.
 
 Successful responses are displayed and optionally spoken with Android's native `TextToSpeech`. Voice output can be toggled or stopped from the main screen. Provider failures remain visible as honest errors, while local commands continue to work without Ollama.
 
@@ -136,7 +136,36 @@ Input -> AssistantCoordinator -> local command OR AIProvider
 	-> AIResponse -> response UI -> optional TextToSpeech
 ```
 
-To use local AI, install Ollama on the development machine, pull the configured model, and make the server reachable by the emulator. A physical device needs a reachable address configured through the `OllamaAIProvider` constructor; no credentials belong in the repository.
+### Ollama setup
+
+1. Install Ollama on the development PC.
+2. Install and verify the selected model:
+
+```powershell
+ollama pull llama3
+ollama list
+```
+
+3. Start Ollama. The default Android Emulator route is:
+
+```text
+http://10.0.2.2:11434
+```
+
+4. For a physical Android device, keep the phone and PC on the same trusted network, determine the PC's LAN address, and build with local-only Gradle properties:
+
+```powershell
+gradlew.bat assembleDebug -POLLAMA_BASE_URL=http://<PC-LAN-IP>:11434 -POLLAMA_MODEL=llama3
+```
+
+The app reads `OLLAMA_BASE_URL` and `OLLAMA_MODEL` from Gradle properties at build time. The repository stores only the emulator/model defaults; do not commit a private LAN address. Ollama may need to be configured to listen on the PC LAN interface rather than only localhost. For a temporary trusted-LAN development session, configure Ollama's host setting before starting its server, for example:
+
+```powershell
+$env:OLLAMA_HOST = "0.0.0.0:11434"
+ollama serve
+```
+
+Allow the port only through the Windows firewall as needed. Exposing Ollama to a LAN increases access risk, so use a trusted private network and disable LAN exposure when finished.
 
 ## 11. How to build APK
 

@@ -14,12 +14,12 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 ### Voice layer
 - `SpeechRecognitionManager` owns Android `SpeechRecognizer` setup, callbacks, errors, and cleanup.
 - `TextToSpeechManager` owns native TTS initialization, locale selection, speaking, stopping, and shutdown.
-- `VoiceState` represents the user-visible voice lifecycle: `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `SUCCESS`, and `ERROR`.
+- `VoiceState` represents the user-visible lifecycle: `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `AI_THINKING`, `RESPONDING`, `SUCCESS`, and `ERROR`.
 - Wake-word detection remains a future concern.
 
 ### AI layer
 - `AIProvider` accepts an `AIRequest` and returns an application-level `AIResponse`.
-- `OllamaAIProvider` isolates local HTTP communication and never requires an API key.
+- `OllamaAIProvider` isolates local HTTP communication and never requires an API key. Its base URL and model are supplied through `BuildConfig`, populated from `OLLAMA_BASE_URL` and `OLLAMA_MODEL` Gradle properties.
 - `AssistantPrompt` centralizes the NAVEEN AI identity and limitation guidance.
 - Placeholder providers return explicit unavailable results rather than fake answers.
 - Prompt manager
@@ -35,6 +35,8 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - Local `GREETING` and `HELP` commands do not use the AI provider.
 - Other input is processed asynchronously by the configured provider and returned as `AIResponse`.
 - The Activity observes results and delegates voice output to `TextToSpeechManager`.
+
+For the Android Emulator, the default provider URL is `http://10.0.2.2:11434`, which maps to the development PC. A physical device uses a PC LAN URL supplied at build time; no LAN address is committed.
 
 ### Android integration layer
 - App launcher
