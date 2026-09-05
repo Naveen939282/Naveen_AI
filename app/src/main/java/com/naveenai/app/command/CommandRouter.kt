@@ -1,52 +1,62 @@
 package com.naveenai.app.command
 
-data class CommandIntent(
+enum class AssistantIntent {
+    GREETING,
+    HELP,
+    UNKNOWN,
+}
+
+data class ClassifiedIntent(
     val rawText: String,
-    val actionType: String,
+    val intent: AssistantIntent,
     val confidence: Float,
 )
 
-interface CommandClassifier {
-    fun classify(rawText: String): CommandIntent
+data class CommandResult(
+    val success: Boolean,
+    val intent: AssistantIntent,
+    val response: String,
+)
+
+interface IntentClassifier {
+    fun classify(rawText: String): ClassifiedIntent
 }
 
-class SimpleCommandClassifier : CommandClassifier {
-    override fun classify(rawText: String): CommandIntent {
-        val normalized = rawText.trim()
-        val action = when {
-            normalized.isEmpty() -> "unknown"
-            normalized.contains("open", ignoreCase = true) -> "open_app"
-            normalized.contains("search", ignoreCase = true) -> "web_search"
-            normalized.contains("reminder", ignoreCase = true) -> "set_reminder"
-            normalized.contains("weather", ignoreCase = true) -> "weather"
-            normalized.contains("explain", ignoreCase = true) -> "explain"
-            else -> "general_chat"
+class LocalIntentClassifier : IntentClassifier {
+    override fun classify(rawText: String): ClassifiedIntent {
+        val normalized = rawText.trim().lowercase()
+        val intent = when {
+            normalized.isEmpty() -> AssistantIntent.UNKNOWN
+            normalized.matches(Regex("(hi|hello|hey)( naveen)?[.!?]*")) -> AssistantIntent.GREETING
+            normalized.matches(Regex("(good morning|good evening)[.!?]*")) -> AssistantIntent.GREETING
+            normalized == "help" || normalized == "commands" ||
+                normalized == "available commands" || normalized == "what can you do" -> AssistantIntent.HELP
+            else -> AssistantIntent.UNKNOWN
         }
 
-        return CommandIntent(
-            rawText = normalized,
-            actionType = action,
-            confidence = 0.5f,
+        return ClassifiedIntent(
+            rawText = rawText.trim(),
+            intent = intent,
+            confidence = if (intent == AssistantIntent.UNKNOWN) 0.2f else 1.0f,
         )
     }
 }
 
-interface ActionExecutor {
-    fun execute(intent: CommandIntent): String
-}
-
-class AssistantActionExecutor : ActionExecutor {
-    override fun execute(intent: CommandIntent): String {
-        return "Action execution for '${intent.actionType}' is planned for a future step."
-    }
-}
-
 class CommandRouter(
-    private val classifier: CommandClassifier = SimpleCommandClassifier(),
-    private val executor: ActionExecutor = AssistantActionExecutor(),
+    private val classifier: IntentClassifier = LocalIntentClassifier(),
 ) {
-    fun route(rawText: String): String {
-        val intent = classifier.classify(rawText)
-        return executor.execute(intent)
+    fun route(rawText: String): CommandResult {
+        val classified = classifier.classify(rawText)
+        val response = when (classified.intent) {
+            AssistantIntent.GREETING -> "Hello! How can I help you?"
+            AssistantIntent.HELP -> "I am being developed to help with commands, information, and Android actions. Currently supported: greetings and help."
+            AssistantIntent.UNKNOWN -> "I didn't understand that command yet."
+        }
+
+        return CommandResult(
+            success = classified.intent != AssistantIntent.UNKNOWN,
+            intent = classified.intent,
+            response = response,
+        )
     }
 }

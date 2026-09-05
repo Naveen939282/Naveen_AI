@@ -12,9 +12,9 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - Future memory and activity history screens
 
 ### Voice layer
-- Wake word detection
-- Speech recognition
-- Text to speech
+- `SpeechRecognitionManager` owns Android `SpeechRecognizer` setup, callbacks, errors, and cleanup.
+- `VoiceState` represents the user-visible voice lifecycle: `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `SUCCESS`, and `ERROR`.
+- Wake-word detection and text-to-speech remain future concerns.
 
 ### AI layer
 - AI provider abstraction
@@ -24,10 +24,9 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - Response parser
 
 ### Command layer
-- Command classifier
-- Command router
-- Intent handler
-- Action executor
+- `IntentClassifier` is the replaceable classification boundary.
+- `LocalIntentClassifier` deterministically recognizes `GREETING`, `HELP`, and `UNKNOWN`.
+- `CommandRouter` returns a structured `CommandResult`; it does not manipulate Android views.
 
 ### Android integration layer
 - App launcher
@@ -53,7 +52,7 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - Error handling
 - Configuration
 
-## Step 1 scope
+## Step 1 and Step 2 scope
 
 Step 1 intentionally includes:
 - app shell
@@ -62,10 +61,14 @@ Step 1 intentionally includes:
 - config files
 - AI interface abstraction
 - command architecture skeleton
-- documentation
+- Android `SpeechRecognizer` voice input foundation
+- microphone permission requested on demand
+- text command fallback
+- deterministic greeting, help, and unknown command handling
+- documentation and tests
 
 It intentionally does not include:
-- production wake word detection
-- live speech recognition implementation
+- wake-word or always-listening detection
+- text-to-speech
 - real AI provider integration
-- full actions like reminders and app launching
+- full actions like reminders, app launching, or automation

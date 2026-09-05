@@ -1,22 +1,56 @@
 package com.naveenai.app.command
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CommandRouterTest {
     @Test
-    fun routesSearchCommandsToWebSearchIntent() {
+    fun routesGreetingToGreetingResponse() {
         val router = CommandRouter()
-        val result = router.route("Search for Python tutorials")
+        val result = router.route("Hello Naveen")
 
-        assertEquals("Action execution for 'web_search' is planned for a future step.", result)
+        assertTrue(result.success)
+        assertEquals(AssistantIntent.GREETING, result.intent)
+        assertEquals("Hello! How can I help you?", result.response)
     }
 
     @Test
-    fun routesReminderCommandsToReminderIntent() {
+    fun routesHelpToHelpResponse() {
         val router = CommandRouter()
-        val result = router.route("Set a reminder for 6 PM")
+        val result = router.route("What can you do")
 
-        assertEquals("Action execution for 'set_reminder' is planned for a future step.", result)
+        assertTrue(result.success)
+        assertEquals(AssistantIntent.HELP, result.intent)
+        assertTrue(result.response.contains("greetings and help"))
+    }
+
+    @Test
+    fun routesUnknownCommandToHonestFallback() {
+        val result = CommandRouter().route("xyz random command")
+
+        assertFalse(result.success)
+        assertEquals(AssistantIntent.UNKNOWN, result.intent)
+        assertEquals("I didn't understand that command yet.", result.response)
+    }
+}
+
+class LocalIntentClassifierTest {
+    private val classifier = LocalIntentClassifier()
+
+    @Test
+    fun classifiesHelloAsGreeting() {
+        assertEquals(AssistantIntent.GREETING, classifier.classify("hello").intent)
+    }
+
+    @Test
+    fun classifiesWhatCanYouDoAsHelp() {
+        assertEquals(AssistantIntent.HELP, classifier.classify("what can you do").intent)
+    }
+
+    @Test
+    fun classifiesUnknownTextAsUnknown() {
+        assertEquals(AssistantIntent.UNKNOWN, classifier.classify("xyz random command").intent)
     }
 }

@@ -11,9 +11,14 @@
 
 ## Step 2
 - Implement microphone workflow
-- Add wake-word detection interface
-- Add speech-to-text integration placeholder
-- Add command classifier foundation
+- Integrate Android `SpeechRecognizer`
+- Add on-demand microphone permission handling
+- Add voice state model and lifecycle cleanup
+- Add deterministic local `GREETING`, `HELP`, and `UNKNOWN` classification
+- Connect structured command results to the app shell
+- Add text-input fallback and unit tests
+
+Step 2 does not include wake-word detection, text-to-speech, external AI, background services, or Android automation.
 
 ## Step 3
 - Implement local SQLite memory layer

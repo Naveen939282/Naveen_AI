@@ -13,7 +13,7 @@ This project is being built as a modular Android application focused on:
 - Android automation where permissions allow it
 - secure local storage and configuration
 
-The current step focuses on a clean foundation, architecture, and a working initial app shell with a microphone UI and status indicator.
+The current step provides a clean foundation, architecture, and a working voice interaction shell with Android speech recognition, deterministic local command routing, and a text fallback.
 
 ## 2. Features planned
 
@@ -110,7 +110,20 @@ gradlew.bat assembleDebug
 
 Then install the APK to an emulator or connected Android device.
 
-## 9. How to build APK
+## 9. Step 2 voice interaction
+
+The Step 2 flow is:
+
+```text
+Microphone -> SpeechRecognizer -> recognized text -> LocalIntentClassifier
+-> CommandRouter -> CommandResult -> response UI
+```
+
+Tap the microphone to request `RECORD_AUDIO` only when needed and start Android's built-in `SpeechRecognizer`. The screen exposes `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `SUCCESS`, and `ERROR` states. A text field and Send button provide a development fallback when a microphone or recognizer is unavailable.
+
+Currently supported local commands are greetings (`hello`, `hi`, `hey`, `good morning`, and `good evening`) and help (`help`, `commands`, `available commands`, and `what can you do`). Other input returns an explicit unsupported-command response.
+
+## 10. How to build APK
 
 ```bash
 ./gradlew assembleRelease
@@ -122,7 +135,7 @@ For a debug build:
 ./gradlew assembleDebug
 ```
 
-## 10. Free-cost strategy
+## 11. Free-cost strategy
 
 - Use Android SDK and Kotlin free of charge
 - Use local SQLite storage
@@ -131,7 +144,7 @@ For a debug build:
 - Avoid paid cloud services by default
 - Use free tiers only when clearly documented and optional
 
-## 11. Security notes
+## 12. Security notes
 
 - Never commit secrets to source control
 - Use .env.example as a template only
@@ -139,18 +152,13 @@ For a debug build:
 - Request only the permissions that are needed for current features
 - Use secure local storage patterns for future credentials
 
-## 12. Future roadmap
+## 13. Future roadmap
 
 ### Step 1
 - Project foundation
 - Architecture design
 - Initial app shell
 - Documentation and setup
-
-### Step 2
-- Wake word and microphone workflow
-- Intent classification and command routing
-- Local AI interface skeleton
 
 ### Step 3
 - Speech recognition
@@ -166,13 +174,14 @@ For a debug build:
 - PDF summarization and document flow
 - Offline AI workflows
 
-## 13. Known limitations
+## 14. Known limitations
 
-- Real voice activation and AI behavior are intentionally not implemented in Step 1.
+- Wake-word detection, text-to-speech, and external or local AI integration are not implemented in Step 2.
+- Android `SpeechRecognizer` availability and network behavior vary by device and installed speech service.
 - Advanced Android integrations require extra permissions and OS restrictions.
 - Some features require emulator or device-specific configuration.
 - Free AI providers have service and rate limits that should be reviewed before use.
 
-## 14. Repository status
+## 15. Repository status
 
-This repository is initialized for Step 1 and is intentionally minimal, modular, and buildable.
+This repository contains the Step 1 foundation and Step 2 voice interaction foundation. It remains intentionally minimal, modular, and buildable.
