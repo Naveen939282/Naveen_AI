@@ -18,12 +18,17 @@
 - Connect structured command results to the app shell
 - Add text-input fallback and unit tests
 
-Step 2 does not include wake-word detection, text-to-speech, external AI, background services, or Android automation.
+Step 2 did not include wake-word detection, text-to-speech, external AI, background services, or Android automation.
 
 ## Step 3
-- Implement local SQLite memory layer
-- Add conversation history and preferences processing
-- Add text-to-speech flow
+- Add replaceable AI request/response abstractions
+- Route non-local conversation through local Ollama
+- Keep local commands available when AI is unavailable
+- Add asynchronous assistant coordination
+- Add native text-to-speech with toggle and stop controls
+- Add fake-provider and failure-path unit tests
+
+Step 3 does not include wake-word detection, background listening, long-term memory, cloud credentials, or Android automation.
 
 ## Step 4
 - Add Android integrations

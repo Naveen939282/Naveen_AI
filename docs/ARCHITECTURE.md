@@ -13,13 +13,15 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 
 ### Voice layer
 - `SpeechRecognitionManager` owns Android `SpeechRecognizer` setup, callbacks, errors, and cleanup.
+- `TextToSpeechManager` owns native TTS initialization, locale selection, speaking, stopping, and shutdown.
 - `VoiceState` represents the user-visible voice lifecycle: `IDLE`, `REQUESTING_PERMISSION`, `LISTENING`, `PROCESSING`, `SUCCESS`, and `ERROR`.
-- Wake-word detection and text-to-speech remain future concerns.
+- Wake-word detection remains a future concern.
 
 ### AI layer
-- AI provider abstraction
-- Local AI provider
-- Free cloud AI provider
+- `AIProvider` accepts an `AIRequest` and returns an application-level `AIResponse`.
+- `OllamaAIProvider` isolates local HTTP communication and never requires an API key.
+- `AssistantPrompt` centralizes the NAVEEN AI identity and limitation guidance.
+- Placeholder providers return explicit unavailable results rather than fake answers.
 - Prompt manager
 - Response parser
 
@@ -27,6 +29,12 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - `IntentClassifier` is the replaceable classification boundary.
 - `LocalIntentClassifier` deterministically recognizes `GREETING`, `HELP`, and `UNKNOWN`.
 - `CommandRouter` returns a structured `CommandResult`; it does not manipulate Android views.
+
+### Assistant coordination
+- `AssistantCoordinator` decides whether input is a deterministic local command or a conversational AI request.
+- Local `GREETING` and `HELP` commands do not use the AI provider.
+- Other input is processed asynchronously by the configured provider and returned as `AIResponse`.
+- The Activity observes results and delegates voice output to `TextToSpeechManager`.
 
 ### Android integration layer
 - App launcher
@@ -52,7 +60,7 @@ NAVEEN AI is designed as a modular Android personal assistant. The architecture 
 - Error handling
 - Configuration
 
-## Step 1 and Step 2 scope
+## Step 1 through Step 3 scope
 
 Step 1 intentionally includes:
 - app shell
@@ -66,9 +74,11 @@ Step 1 intentionally includes:
 - text command fallback
 - deterministic greeting, help, and unknown command handling
 - documentation and tests
+- local Ollama AI provider boundary and structured response model
+- asynchronous conversation processing
+- native text-to-speech with voice controls
 
 It intentionally does not include:
 - wake-word or always-listening detection
-- text-to-speech
-- real AI provider integration
+- cloud AI providers or API credentials
 - full actions like reminders, app launching, or automation
