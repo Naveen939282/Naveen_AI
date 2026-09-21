@@ -4,6 +4,8 @@ enum class AssistantIntent {
     GREETING,
     HELP,
     REPEAT,
+    TIME,
+    DATE,
     UNKNOWN,
 }
 
@@ -33,6 +35,8 @@ class LocalIntentClassifier : IntentClassifier {
             normalized == "help" || normalized == "commands" ||
                 normalized == "available commands" || normalized == "what can you do" -> AssistantIntent.HELP
             normalized.matches(Regex("(repeat that|repeat that sentence|repeat the last sentence|repeat the line|say that again( please)?|again|what did you say)[.!?]*")) -> AssistantIntent.REPEAT
+            normalized.matches(Regex("(what time is it|what's the time|tell me the time|current time|time please)[.!?]*")) -> AssistantIntent.TIME
+            normalized.matches(Regex("(what's today's date|what is the date|tell me today's date|today's date|what day is it)[.!?]*")) -> AssistantIntent.DATE
             else -> AssistantIntent.UNKNOWN
         }
 
@@ -53,6 +57,8 @@ class CommandRouter(
             AssistantIntent.GREETING -> "Hello! How can I help you?"
             AssistantIntent.HELP -> "I am being developed to help with commands, information, and Android actions. Currently supported: greetings and help."
             AssistantIntent.REPEAT -> "There isn't anything to repeat yet."
+            AssistantIntent.TIME -> ""
+            AssistantIntent.DATE -> ""
             AssistantIntent.UNKNOWN -> "I didn't understand that command yet."
         }
 

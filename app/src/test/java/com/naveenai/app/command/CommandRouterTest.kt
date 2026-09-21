@@ -81,4 +81,27 @@ class LocalIntentClassifierTest {
     fun conversationalTextIsNotRepeat() {
         assertEquals(AssistantIntent.UNKNOWN, classifier.classify("Explain that again in detail").intent)
     }
+
+    @Test
+    fun classifiesTimeAndDateVariationsLocally() {
+        listOf(
+            "What time is it?",
+            "What's the time",
+            "Tell me the time",
+            "Current time",
+            "Time please",
+        ).forEach { text ->
+            assertEquals(AssistantIntent.TIME, classifier.classify(text).intent)
+        }
+
+        listOf(
+            "What's today's date?",
+            "What is the date",
+            "Tell me today's date",
+            "Today's date",
+            "What day is it?",
+        ).forEach { text ->
+            assertEquals(AssistantIntent.DATE, classifier.classify(text).intent)
+        }
+    }
 }
