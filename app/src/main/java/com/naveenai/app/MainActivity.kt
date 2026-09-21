@@ -12,6 +12,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.naveenai.app.ai.AIResponse
 import com.naveenai.app.ai.AssistantCoordinator
+import com.naveenai.app.command.AssistantIntent
+import com.naveenai.app.command.LocalIntentClassifier
 import com.naveenai.app.databinding.ActivityMainBinding
 import com.naveenai.app.voice.SpeechRecognitionManager
 import com.naveenai.app.voice.TextToSpeechManager
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognitionManager.Listener {
     private lateinit var speechRecognitionManager: SpeechRecognitionManager
     private lateinit var textToSpeechManager: TextToSpeechManager
     private val assistantCoordinator = AssistantCoordinator()
+    private val localIntentClassifier = LocalIntentClassifier()
     private var processingJob: Job? = null
     private var voiceResponseEnabled = true
 
@@ -83,7 +86,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognitionManager.Listener {
         binding.sendButton.setOnClickListener {
             val text = binding.commandInput.text?.toString().orEmpty().trim()
             if (text.isNotEmpty() && processingJob == null) {
-                processCommand(text)
+                processInput(text)
                 binding.commandInput.text?.clear()
             }
         }
@@ -125,7 +128,7 @@ class MainActivity : AppCompatActivity(), SpeechRecognitionManager.Listener {
 
     override fun onTextRecognized(text: String) {
         binding.recognizedText.text = text
-        if (processingJob == null) processCommand(text)
+        processInput(text)
     }
 
     override fun onError(message: String) {
@@ -151,6 +154,27 @@ class MainActivity : AppCompatActivity(), SpeechRecognitionManager.Listener {
                 binding.micButton.isEnabled = true
             }
         }
+    }
+
+    private fun processInput(text: String) {
+        if (localIntentClassifier.classify(text).intent == AssistantIntent.REPEAT) {
+            handleRepeat()
+        } else if (processingJob == null) {
+            processCommand(text)
+        }
+    }
+
+    private fun handleRepeat() {
+        val sentence = textToSpeechManager.repeatCurrentSentence(voiceResponseEnabled)
+        if (sentence == null) {
+            binding.responseText.text = "There isn't anything to repeat yet."
+            onStateChanged(VoiceState.ERROR)
+            return
+        }
+
+        binding.responseText.text = sentence
+        onStateChanged(VoiceState.RESPONDING)
+        onStateChanged(VoiceState.SUCCESS)
     }
 
     private fun displayResult(result: AIResponse) {

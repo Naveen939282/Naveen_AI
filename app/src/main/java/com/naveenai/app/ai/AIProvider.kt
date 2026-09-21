@@ -1,5 +1,6 @@
 package com.naveenai.app.ai
 
+import android.util.Log
 import com.naveenai.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
@@ -36,11 +37,13 @@ class OllamaAIProvider(
 ) : AIProvider {
     override suspend fun generateResponse(request: AIRequest): AIResponse = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
+        val endpoint = "${baseUrl.trimEnd('/')}/api/chat"
         try {
-            connection = (URL("${baseUrl.trimEnd('/')}/api/chat").openConnection() as HttpURLConnection).apply {
+            Log.d(TAG, "request starting: endpoint=${sanitizeEndpoint(endpoint)}, model=$model")
+            connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
-                connectTimeout = 10_000
-                readTimeout = 60_000
+                connectTimeout = CONNECT_TIMEOUT_MS
+                readTimeout = READ_TIMEOUT_MS
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")
             }
@@ -56,12 +59,15 @@ class OllamaAIProvider(
 
             connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             val responseCode = connection.responseCode
+            Log.d(TAG, "HTTP response code: $responseCode")
             val responseBody = (if (responseCode in 200..299) connection.inputStream else connection.errorStream)
                 ?.bufferedReader()
                 ?.use { it.readText() }
                 .orEmpty()
+            Log.d(TAG, "response received: bodyLength=${responseBody.length}")
             if (responseCode !in 200..299) {
                 val modelError = runCatching { JSONObject(responseBody).optString("error") }.getOrNull()
+                Log.e(TAG, "Ollama HTTP failure: errorPresent=${!modelError.isNullOrBlank()}")
                 val message = if (modelError?.contains("model", ignoreCase = true) == true &&
                     modelError.contains("not found", ignoreCase = true)
                 ) {
@@ -74,15 +80,19 @@ class OllamaAIProvider(
 
             val text = JSONObject(responseBody).optJSONObject("message")?.optString("content").orEmpty().trim()
             if (text.isEmpty()) {
+                Log.e(TAG, "parsing failed: message.content is empty")
                 AIResponse(false, "", "The local AI service returned an empty response.")
             } else {
+                Log.d(TAG, "parsing success: responseTextPresent=true")
                 AIResponse(true, text)
             }
         } catch (exception: CancellationException) {
             throw exception
-        } catch (_: IOException) {
+        } catch (exception: IOException) {
+            Log.e(TAG, "request exception: ${exception::class.java.simpleName}: ${exception.message}")
             AIResponse(false, "", "I couldn't reach the local AI service. Start Ollama and try again.")
-        } catch (_: Exception) {
+        } catch (exception: Exception) {
+            Log.e(TAG, "request exception: ${exception::class.java.simpleName}: ${exception.message}")
             AIResponse(false, "", "The local AI service returned an invalid response.")
         } finally {
             connection?.disconnect()
@@ -90,6 +100,17 @@ class OllamaAIProvider(
     }
 
     override fun isAvailable(): Boolean = true
+
+    private companion object {
+        const val TAG = "NAVEEN_OLLAMA"
+        const val CONNECT_TIMEOUT_MS = 30_000
+        const val READ_TIMEOUT_MS = 300_000
+
+        fun sanitizeEndpoint(endpoint: String): String = runCatching {
+            val parsed = URL(endpoint)
+            "${parsed.protocol}://${parsed.host}:${parsed.port}${parsed.path}"
+        }.getOrDefault("<invalid-endpoint>")
+    }
 }
 
 class LocalAIProvider : AIProvider {

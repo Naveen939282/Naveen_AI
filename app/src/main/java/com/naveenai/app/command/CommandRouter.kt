@@ -3,6 +3,7 @@ package com.naveenai.app.command
 enum class AssistantIntent {
     GREETING,
     HELP,
+    REPEAT,
     UNKNOWN,
 }
 
@@ -31,6 +32,7 @@ class LocalIntentClassifier : IntentClassifier {
             normalized.matches(Regex("(good morning|good evening)[.!?]*")) -> AssistantIntent.GREETING
             normalized == "help" || normalized == "commands" ||
                 normalized == "available commands" || normalized == "what can you do" -> AssistantIntent.HELP
+            normalized.matches(Regex("(repeat that|repeat that sentence|repeat the last sentence|repeat the line|say that again( please)?|again|what did you say)[.!?]*")) -> AssistantIntent.REPEAT
             else -> AssistantIntent.UNKNOWN
         }
 
@@ -50,6 +52,7 @@ class CommandRouter(
         val response = when (classified.intent) {
             AssistantIntent.GREETING -> "Hello! How can I help you?"
             AssistantIntent.HELP -> "I am being developed to help with commands, information, and Android actions. Currently supported: greetings and help."
+            AssistantIntent.REPEAT -> "There isn't anything to repeat yet."
             AssistantIntent.UNKNOWN -> "I didn't understand that command yet."
         }
 

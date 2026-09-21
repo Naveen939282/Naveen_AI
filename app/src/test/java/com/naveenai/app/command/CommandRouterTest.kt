@@ -34,6 +34,15 @@ class CommandRouterTest {
         assertEquals(AssistantIntent.UNKNOWN, result.intent)
         assertEquals("I didn't understand that command yet.", result.response)
     }
+
+    @Test
+    fun routesRepeatWithoutHistoryToLocalResponse() {
+        val result = CommandRouter().route("repeat that")
+
+        assertTrue(result.success)
+        assertEquals(AssistantIntent.REPEAT, result.intent)
+        assertEquals("There isn't anything to repeat yet.", result.response)
+    }
 }
 
 class LocalIntentClassifierTest {
@@ -52,5 +61,24 @@ class LocalIntentClassifierTest {
     @Test
     fun classifiesUnknownTextAsUnknown() {
         assertEquals(AssistantIntent.UNKNOWN, classifier.classify("xyz random command").intent)
+    }
+
+    @Test
+    fun classifiesRepeatVariationsLocally() {
+        listOf(
+            "repeat that",
+            "say that again please",
+            "repeat the last sentence",
+            "again",
+            "what did you say",
+            "repeat the line",
+        ).forEach { text ->
+            assertEquals(AssistantIntent.REPEAT, classifier.classify(text).intent)
+        }
+    }
+
+    @Test
+    fun conversationalTextIsNotRepeat() {
+        assertEquals(AssistantIntent.UNKNOWN, classifier.classify("Explain that again in detail").intent)
     }
 }
