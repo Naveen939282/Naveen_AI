@@ -12,7 +12,7 @@ class TimeAction(
 ) : AndroidAction {
     override val intent: AssistantIntent = AssistantIntent.TIME
 
-    override suspend fun execute(): ActionResult {
+    override suspend fun execute(request: ActionRequest): ActionResult {
         val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
             .withLocale(Locale.getDefault())
         val time = formatter.format(ZonedDateTime.now(clock))

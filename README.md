@@ -142,6 +142,10 @@ Step 4.1 adds a small deterministic action layer without giving Ollama Android e
 
 The action layer is intentionally ready for later application, URL, search, settings, reminder, navigation, and permission-aware phone actions, but none of those features are implemented in Step 4.1.
 
+## 12. Step 4.2 open Android apps
+
+Step 4.2 adds the deterministic `OPEN_APP` action. Commands such as `open YouTube`, `launch Chrome`, and `start WhatsApp` are resolved locally against installed launcher applications by label. Ambiguous or missing matches fail safely, and Ollama is never used for app launching.
+
 ### Ollama setup
 
 1. Install Ollama on the development PC.
@@ -173,7 +177,7 @@ ollama serve
 
 Allow the port only through the Windows firewall as needed. Exposing Ollama to a LAN increases access risk, so use a trusted private network and disable LAN exposure when finished.
 
-## 12. How to build APK
+## 13. How to build APK
 
 ```bash
 ./gradlew assembleRelease
@@ -185,7 +189,7 @@ For a debug build:
 ./gradlew assembleDebug
 ```
 
-## 13. Free-cost strategy
+## 14. Free-cost strategy
 
 - Use Android SDK and Kotlin free of charge
 - Use local SQLite storage
@@ -194,7 +198,7 @@ For a debug build:
 - Avoid paid cloud services by default
 - Use free tiers only when clearly documented and optional
 
-## 14. Security notes
+## 15. Security notes
 
 - Never commit secrets to source control
 - Use .env.example as a template only
@@ -202,7 +206,7 @@ For a debug build:
 - Request only the permissions that are needed for current features
 - Use secure local storage patterns for future credentials
 
-## 15. Future roadmap
+## 16. Future roadmap
 
 ### Step 1
 - Project foundation
@@ -224,7 +228,7 @@ For a debug build:
 - PDF summarization and document flow
 - Offline AI workflows
 
-## 16. Known limitations
+## 17. Known limitations
 
 - Wake-word detection, background listening, and Android automation are not implemented.
 - Long-term memory, vision, and cloud AI providers are not implemented.
@@ -234,6 +238,6 @@ For a debug build:
 - Some features require emulator or device-specific configuration.
 - Free AI providers have service and rate limits that should be reviewed before use.
 
-## 17. Repository status
+## 18. Repository status
 
 This repository contains the Step 1 foundation, Step 2 voice interaction foundation, and Step 3 AI brain/TTS foundation. It remains intentionally minimal, modular, and buildable.

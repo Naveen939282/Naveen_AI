@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.naveenai.app.ai.AIResponse
 import com.naveenai.app.ai.AssistantCoordinator
+import com.naveenai.app.actions.ActionDispatcher
 import com.naveenai.app.command.AssistantIntent
 import com.naveenai.app.command.LocalIntentClassifier
 import com.naveenai.app.databinding.ActivityMainBinding
@@ -27,7 +28,9 @@ class MainActivity : AppCompatActivity(), SpeechRecognitionManager.Listener {
     private lateinit var requestAudioPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var speechRecognitionManager: SpeechRecognitionManager
     private lateinit var textToSpeechManager: TextToSpeechManager
-    private val assistantCoordinator = AssistantCoordinator()
+    private val assistantCoordinator by lazy {
+        AssistantCoordinator(actionDispatcher = ActionDispatcher.forAndroid(applicationContext))
+    }
     private val localIntentClassifier = LocalIntentClassifier()
     private var processingJob: Job? = null
     private var voiceResponseEnabled = true

@@ -104,4 +104,27 @@ class LocalIntentClassifierTest {
             assertEquals(AssistantIntent.DATE, classifier.classify(text).intent)
         }
     }
+
+    @Test
+    fun classifiesOpenAppVariationsLocally() {
+        assertEquals(AssistantIntent.OPEN_APP, classifier.classify("Open YouTube").intent)
+        assertEquals("youtube", classifier.classify("Open YouTube").argument)
+        assertEquals(AssistantIntent.OPEN_APP, classifier.classify("Launch Chrome").intent)
+        assertEquals(AssistantIntent.OPEN_APP, classifier.classify("Start WhatsApp").intent)
+        assertEquals(AssistantIntent.OPEN_APP, classifier.classify("Open the Spotify").intent)
+        assertEquals("spotify", classifier.classify("Open the Spotify").argument)
+    }
+
+    @Test
+    fun doesNotClassifyAppConversationAsOpenApp() {
+        listOf(
+            "What is YouTube?",
+            "Tell me about Chrome",
+            "How do I open a company?",
+            "Can you explain how browsers launch?",
+            "Unrelated conversational text",
+        ).forEach { text ->
+            assertEquals(AssistantIntent.UNKNOWN, classifier.classify(text).intent)
+        }
+    }
 }

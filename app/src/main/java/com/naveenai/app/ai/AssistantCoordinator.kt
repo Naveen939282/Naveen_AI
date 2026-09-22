@@ -15,8 +15,11 @@ class AssistantCoordinator(
 ) {
     suspend fun process(text: String): AIResponse = withContext(Dispatchers.Default) {
         val classified = classifier.classify(text)
-        if (classified.intent == AssistantIntent.TIME || classified.intent == AssistantIntent.DATE) {
-            val action = actionDispatcher.dispatch(classified.intent)
+        if (classified.intent == AssistantIntent.TIME ||
+            classified.intent == AssistantIntent.DATE ||
+            classified.intent == AssistantIntent.OPEN_APP
+        ) {
+            val action = actionDispatcher.dispatch(classified.intent, classified.argument)
             return@withContext AIResponse(
                 action.success,
                 if (action.success) action.message else "",

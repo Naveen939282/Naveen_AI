@@ -62,12 +62,18 @@ class TimeAndDateActionTest {
 
 class ActionCoordinatorTest {
     @Test
-    fun timeAndDateDoNotCallOllama() = runBlocking {
+    fun deterministicActionsDoNotCallOllama() = runBlocking {
         val provider = RecordingAIProvider()
-        val coordinator = AssistantCoordinator(aiProvider = provider)
+        val openAppAction = FakeAction(AssistantIntent.OPEN_APP, ActionResult(true, "Opening YouTube."))
+        val coordinator = AssistantCoordinator(
+            actionDispatcher = ActionDispatcher(listOf(TimeAction(), DateAction(), openAppAction)),
+            aiProvider = provider,
+        )
 
         assertTrue(coordinator.process("What time is it?").success)
         assertTrue(coordinator.process("What's today's date?").success)
+        assertTrue(coordinator.process("Open YouTube").success)
+        assertTrue(openAppAction.executed)
         assertEquals(0, provider.calls)
     }
 }
@@ -78,7 +84,7 @@ private class FakeAction(
 ) : AndroidAction {
     var executed = false
 
-    override suspend fun execute(): ActionResult {
+    override suspend fun execute(request: ActionRequest): ActionResult {
         executed = true
         return result
     }
@@ -93,4 +99,90 @@ private class RecordingAIProvider : AIProvider {
     }
 
     override fun isAvailable(): Boolean = true
+}
+
+class LabelAppResolverTest {
+    private val resolver = LabelAppResolver(
+        listOf(
+            InstalledApp("com.google.android.youtube", "YouTube"),
+            InstalledApp("com.spotify.music", "Spotify"),
+            InstalledApp("com.example.youtube", "YouTube"),
+        ),
+    )
+
+    @Test
+    fun resolvesExactLabelCaseInsensitively() {
+        assertEquals(
+            AppResolution.Ambiguous(
+                listOf(
+                    InstalledApp("com.google.android.youtube", "YouTube"),
+                    InstalledApp("com.example.youtube", "YouTube"),
+                ),
+            ),
+            resolver.resolve("youtube"),
+        )
+        assertEquals(
+            AppResolution.Found(InstalledApp("com.spotify.music", "Spotify")),
+            resolver.resolve("SPOTIFY"),
+        )
+    }
+
+    @Test
+    fun handlesMissingAndNormalizedLabels() {
+        assertEquals(AppResolution.Missing, resolver.resolve("Maps"))
+        assertEquals(
+            AppResolution.Found(InstalledApp("com.spotify.music", "Spotify")),
+            resolver.resolve("  Spotify!!! "),
+        )
+    }
+}
+
+class OpenAppActionTest {
+    private val app = InstalledApp("com.spotify.music", "Spotify")
+
+    @Test
+    fun launchesResolvedApplication() = runBlocking {
+        val launcher = RecordingLauncher()
+        val result = OpenAppAction(FakeResolver(AppResolution.Found(app)), launcher)
+            .execute(ActionRequest(AssistantIntent.OPEN_APP, "Spotify"))
+
+        assertTrue(result.success)
+        assertEquals(app, launcher.launchedApp)
+    }
+
+    @Test
+    fun reportsMissingApplication() = runBlocking {
+        val result = OpenAppAction(FakeResolver(AppResolution.Missing), RecordingLauncher())
+            .execute(ActionRequest(AssistantIntent.OPEN_APP, "Maps"))
+
+        assertFalse(result.success)
+        assertTrue(result.message.contains("Maps"))
+    }
+
+    @Test
+    fun reportsLaunchFailureWithoutThrowing() = runBlocking {
+        val launcher = RecordingLauncher { error("launch failed") }
+        val result = OpenAppAction(FakeResolver(AppResolution.Found(app)), launcher)
+            .execute(ActionRequest(AssistantIntent.OPEN_APP, "Spotify"))
+
+        assertFalse(result.success)
+        assertTrue(result.message.contains("Spotify"))
+    }
+}
+
+private class FakeResolver(
+    private val resolution: AppResolution,
+) : AppResolver {
+    override fun resolve(appName: String): AppResolution = resolution
+}
+
+private class RecordingLauncher(
+    private val action: () -> Unit = {},
+) : AppLauncher {
+    var launchedApp: InstalledApp? = null
+
+    override fun launch(app: InstalledApp) {
+        launchedApp = app
+        action()
+    }
 }

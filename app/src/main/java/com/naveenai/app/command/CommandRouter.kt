@@ -6,6 +6,7 @@ enum class AssistantIntent {
     REPEAT,
     TIME,
     DATE,
+    OPEN_APP,
     UNKNOWN,
 }
 
@@ -13,6 +14,7 @@ data class ClassifiedIntent(
     val rawText: String,
     val intent: AssistantIntent,
     val confidence: Float,
+    val argument: String? = null,
 )
 
 data class CommandResult(
@@ -37,6 +39,7 @@ class LocalIntentClassifier : IntentClassifier {
             normalized.matches(Regex("(repeat that|repeat that sentence|repeat the last sentence|repeat the line|say that again( please)?|again|what did you say)[.!?]*")) -> AssistantIntent.REPEAT
             normalized.matches(Regex("(what time is it|what's the time|tell me the time|current time|time please)[.!?]*")) -> AssistantIntent.TIME
             normalized.matches(Regex("(what's today's date|what is the date|tell me today's date|today's date|what day is it)[.!?]*")) -> AssistantIntent.DATE
+            openAppMatch(normalized) != null -> AssistantIntent.OPEN_APP
             else -> AssistantIntent.UNKNOWN
         }
 
@@ -44,8 +47,12 @@ class LocalIntentClassifier : IntentClassifier {
             rawText = rawText.trim(),
             intent = intent,
             confidence = if (intent == AssistantIntent.UNKNOWN) 0.2f else 1.0f,
+            argument = openAppMatch(normalized)?.groupValues?.get(3)?.trim(),
         )
     }
+
+    private fun openAppMatch(normalized: String): MatchResult? =
+        Regex("^(open|launch|start)\\s+(the\\s+)?(.+?)[.!?]*$").matchEntire(normalized)
 }
 
 class CommandRouter(
@@ -59,6 +66,7 @@ class CommandRouter(
             AssistantIntent.REPEAT -> "There isn't anything to repeat yet."
             AssistantIntent.TIME -> ""
             AssistantIntent.DATE -> ""
+            AssistantIntent.OPEN_APP -> ""
             AssistantIntent.UNKNOWN -> "I didn't understand that command yet."
         }
 
