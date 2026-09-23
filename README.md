@@ -146,6 +146,10 @@ The action layer is intentionally ready for later application, URL, search, sett
 
 Step 4.2 adds the deterministic `OPEN_APP` action. Commands such as `open YouTube`, `launch Chrome`, and `start WhatsApp` are resolved locally against installed launcher applications by label. Ambiguous or missing matches fail safely, and Ollama is never used for app launching.
 
+## 13. Step 4.3 deterministic web navigation
+
+Step 4.3 adds deterministic `OPEN_URL` handling for clear web-navigation commands such as `open Google`, `go to Google.com`, `open GitHub`, and `open https://github.com`. Named services and domains are normalized to HTTPS, then opened with Android's generic `ACTION_VIEW` intent so the user's available browser resolves the link. `Open YouTube` remains an app-launch command, while `Open YouTube.com` opens the website. Conversational questions remain on the Ollama fallback path.
+
 ### Ollama setup
 
 1. Install Ollama on the development PC.
@@ -177,7 +181,7 @@ ollama serve
 
 Allow the port only through the Windows firewall as needed. Exposing Ollama to a LAN increases access risk, so use a trusted private network and disable LAN exposure when finished.
 
-## 13. How to build APK
+## 14. How to build APK
 
 ```bash
 ./gradlew assembleRelease

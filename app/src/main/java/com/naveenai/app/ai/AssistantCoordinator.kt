@@ -17,7 +17,8 @@ class AssistantCoordinator(
         val classified = classifier.classify(text)
         if (classified.intent == AssistantIntent.TIME ||
             classified.intent == AssistantIntent.DATE ||
-            classified.intent == AssistantIntent.OPEN_APP
+            classified.intent == AssistantIntent.OPEN_APP ||
+            classified.intent == AssistantIntent.OPEN_URL
         ) {
             val action = actionDispatcher.dispatch(classified.intent, classified.argument)
             return@withContext AIResponse(

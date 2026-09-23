@@ -116,12 +116,28 @@ class LocalIntentClassifierTest {
     }
 
     @Test
+    fun classifiesWebNavigationLocally() {
+        listOf(
+            "Open Google",
+            "Open GitHub",
+            "Open YouTube.com",
+            "Go to Google.com",
+            "Open https://github.com",
+            "Go to https://youtube.com",
+            "Open www.google.com",
+        ).forEach { text ->
+            assertEquals(AssistantIntent.OPEN_URL, classifier.classify(text).intent)
+        }
+    }
+
+    @Test
     fun doesNotClassifyAppConversationAsOpenApp() {
         listOf(
             "What is YouTube?",
             "Tell me about Chrome",
             "How do I open a company?",
             "Can you explain how browsers launch?",
+            "What is Google?",
             "Unrelated conversational text",
         ).forEach { text ->
             assertEquals(AssistantIntent.UNKNOWN, classifier.classify(text).intent)

@@ -17,7 +17,12 @@ class ActionDispatcher(
 
     companion object {
         fun forAndroid(context: android.content.Context): ActionDispatcher = ActionDispatcher(
-            listOf(TimeAction(), DateAction(), OpenAppAction.forAndroid(context)),
+            listOf(
+                TimeAction(),
+                DateAction(),
+                OpenAppAction.forAndroid(context),
+                OpenUrlAction.forAndroid(context),
+            ),
         )
     }
 }

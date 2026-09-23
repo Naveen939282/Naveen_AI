@@ -7,6 +7,7 @@ enum class AssistantIntent {
     TIME,
     DATE,
     OPEN_APP,
+    OPEN_URL,
     UNKNOWN,
 }
 
@@ -39,6 +40,7 @@ class LocalIntentClassifier : IntentClassifier {
             normalized.matches(Regex("(repeat that|repeat that sentence|repeat the last sentence|repeat the line|say that again( please)?|again|what did you say)[.!?]*")) -> AssistantIntent.REPEAT
             normalized.matches(Regex("(what time is it|what's the time|tell me the time|current time|time please)[.!?]*")) -> AssistantIntent.TIME
             normalized.matches(Regex("(what's today's date|what is the date|tell me today's date|today's date|what day is it)[.!?]*")) -> AssistantIntent.DATE
+            openUrlMatch(normalized) != null -> AssistantIntent.OPEN_URL
             openAppMatch(normalized) != null -> AssistantIntent.OPEN_APP
             else -> AssistantIntent.UNKNOWN
         }
@@ -47,9 +49,25 @@ class LocalIntentClassifier : IntentClassifier {
             rawText = rawText.trim(),
             intent = intent,
             confidence = if (intent == AssistantIntent.UNKNOWN) 0.2f else 1.0f,
-            argument = openAppMatch(normalized)?.groupValues?.get(3)?.trim(),
+            argument = when (intent) {
+                AssistantIntent.OPEN_URL -> openUrlMatch(normalized)?.groupValues?.get(2)?.trim()
+                AssistantIntent.OPEN_APP -> openAppMatch(normalized)?.groupValues?.get(3)?.trim()
+                else -> null
+            },
         )
     }
+
+    private fun openUrlMatch(normalized: String): MatchResult? =
+        Regex("^(open|go to|visit)\\s+(.+?)[.!?]*$")
+            .matchEntire(normalized)
+            ?.takeIf { isWebTarget(it.groupValues[2]) }
+
+    private fun isWebTarget(target: String): Boolean =
+        target in setOf("google", "github") ||
+            target.startsWith("http://") ||
+            target.startsWith("https://") ||
+            target.startsWith("www.") ||
+            target.matches(Regex("[a-z0-9-]+(\\.[a-z0-9-]+)+"))
 
     private fun openAppMatch(normalized: String): MatchResult? =
         Regex("^(open|launch|start)\\s+(the\\s+)?(.+?)[.!?]*$").matchEntire(normalized)
@@ -67,6 +85,7 @@ class CommandRouter(
             AssistantIntent.TIME -> ""
             AssistantIntent.DATE -> ""
             AssistantIntent.OPEN_APP -> ""
+            AssistantIntent.OPEN_URL -> ""
             AssistantIntent.UNKNOWN -> "I didn't understand that command yet."
         }
 

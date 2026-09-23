@@ -186,3 +186,58 @@ private class RecordingLauncher(
         action()
     }
 }
+
+class OpenUrlActionTest {
+    @Test
+    fun normalizesNamedAndDomainUrls() {
+        assertEquals("https://www.google.com", OpenUrlAction.normalize("Google"))
+        assertEquals("https://www.google.com", OpenUrlAction.normalize("www.google.com"))
+        assertEquals("https://github.com", OpenUrlAction.normalize("github.com"))
+        assertEquals("https://github.com", OpenUrlAction.normalize("https://github.com"))
+        assertEquals("http://example.com", OpenUrlAction.normalize("http://example.com"))
+        assertEquals("https://www.youtube.com", OpenUrlAction.normalize("youtube"))
+        assertEquals("https://www.youtube.com", OpenUrlAction.normalize("youtube.com"))
+        assertEquals("https://www.youtube.com", OpenUrlAction.normalize("www.youtube.com"))
+        assertEquals("https://www.youtube.com", OpenUrlAction.normalize("https://youtube.com"))
+        assertEquals("https://www.youtube.com", OpenUrlAction.normalize("https://www.youtube.com"))
+    }
+
+    @Test
+    fun launchesYouTubeUrlVariants() = runBlocking {
+        listOf(
+            "Open YouTube.com" to "YouTube.com!",
+            "Go to YouTube.com" to "YouTube.com",
+            "Open www.youtube.com" to "www.youtube.com",
+            "Open https://youtube.com" to "https://youtube.com",
+        ).forEach { (_, target) ->
+            val launcher = RecordingUrlLauncher()
+            val result = OpenUrlAction(launcher).execute(
+                ActionRequest(AssistantIntent.OPEN_URL, target)
+            )
+
+            assertTrue(result.success)
+            assertEquals("https://www.youtube.com", launcher.launchedUrl)
+        }
+    }
+
+    @Test
+    fun reportsLaunchFailureWithoutThrowing() = runBlocking {
+        val result = OpenUrlAction(RecordingUrlLauncher { error("no browser") }).execute(
+            ActionRequest(AssistantIntent.OPEN_URL, "github.com")
+        )
+
+        assertFalse(result.success)
+        assertEquals("I couldn't open that link.", result.message)
+    }
+}
+
+private class RecordingUrlLauncher(
+    private val action: () -> Unit = {},
+) : UrlLauncher {
+    var launchedUrl: String? = null
+
+    override fun launch(url: String) {
+        launchedUrl = url
+        action()
+    }
+}
